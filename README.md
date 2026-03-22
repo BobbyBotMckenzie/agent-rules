@@ -38,12 +38,24 @@ cp .agent-rules/biome.json .
 | `ubiquitous-language` | DDD glossary extraction for naming consistency |
 | `code-quality` | Standing rules for TypeScript, React, and general code quality |
 
-### Lint Config
+### Lint Configs
 
-| File | What it does |
-|---|---|
-| `biome.json` | Biome config with agent-proof rules (no-any = error, unused imports = error) |
-| `biome-relaxed.json` | Same but with `any` as warning — for gradual adoption on existing codebases |
+Pick the linter your project uses. All three enforce the same core rules:
+
+| File | Linter | Notes |
+|---|---|---|
+| `lint/biome.json` | Biome | Fastest. Single tool for lint + format. Recommended for new projects. |
+| `lint/biome-relaxed.json` | Biome | Same but `any` as warning — for gradual adoption on existing codebases |
+| `lint/eslint.config.mjs` | ESLint (flat config) | Most ecosystem support. Needs `typescript-eslint`, `eslint-plugin-react`, `eslint-plugin-react-hooks`. |
+| `lint/oxlint.json` | oxlint | Rust-based, very fast. Good as a complement to ESLint or standalone. |
+
+**Core rules enforced by all three:**
+- `no-explicit-any` → error
+- `no-ts-ignore` / `ban-ts-comment` → error
+- `no-unused-vars` / `no-unused-imports` → error
+- `jsx-key` → error
+- `vi.mock()` / `vi.spyOn()` / `vi.stubGlobal()` → banned in test files
+- `useEffect` → banned via `no-restricted-imports` (ESLint/oxlint) or skill enforcement (Biome)
 
 ### Git Hooks
 

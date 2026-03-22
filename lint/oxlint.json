@@ -1,0 +1,55 @@
+{
+  "$schema": "https://raw.githubusercontent.com/nicolo-ribaudo/oxc-project/main/npm/oxlint/configuration_schema.json",
+  "rules": {
+    "no-explicit-any": "error",
+    "no-unsafe-argument": "error",
+    "no-unsafe-assignment": "error",
+    "no-unsafe-call": "error",
+    "no-unsafe-member-access": "error",
+    "no-unsafe-return": "error",
+
+    "ban-ts-comment": ["error", {
+      "ts-ignore": true,
+      "ts-expect-error": true,
+      "ts-nocheck": true
+    }],
+
+    "no-unused-vars": ["error", {
+      "argsIgnorePattern": "^_",
+      "varsIgnorePattern": "^_"
+    }],
+
+    "no-non-null-assertion": "warn",
+    "consistent-type-imports": "error",
+
+    "react/jsx-key": "error",
+    "react/no-danger": "warn",
+    "react/button-has-type": "warn",
+    "react/jsx-no-target-blank": "error",
+
+    "react-hooks/rules-of-hooks": "error",
+    "react-hooks/exhaustive-deps": "warn",
+
+    "no-restricted-syntax": ["error",
+      {
+        "selector": "CallExpression[callee.object.name='vi'][callee.property.name='mock']",
+        "message": "vi.mock() is banned. Use dependency injection instead. See .agents/skills/no-vi-mock/"
+      },
+      {
+        "selector": "CallExpression[callee.object.name='vi'][callee.property.name='spyOn']",
+        "message": "vi.spyOn() is banned. Use dependency injection instead. See .agents/skills/no-vi-mock/"
+      },
+      {
+        "selector": "CallExpression[callee.object.name='vi'][callee.property.name='stubGlobal']",
+        "message": "vi.stubGlobal() is banned. Use dependency injection instead. See .agents/skills/no-vi-mock/"
+      }
+    ]
+  },
+  "ignorePatterns": [
+    "node_modules",
+    "dist",
+    ".next",
+    "build",
+    "**/.astro"
+  ]
+}
