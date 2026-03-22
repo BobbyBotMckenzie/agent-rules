@@ -16,6 +16,32 @@ cd /path/to/your/project
 ralph doctor
 ```
 
+## Backend Selection
+
+Ralph supports multiple AI CLI backends. Change the `backend` field in `ralph.yml`:
+
+| Backend | CLI | Config value |
+|---|---|---|
+| Claude Code | `claude` | `backend: "claude"` |
+| **Kiro** | `kiro-cli` | `backend: "kiro"` |
+| Gemini CLI | `gemini` | `backend: "gemini"` |
+| Codex | `codex` | `backend: "codex"` |
+| Amp | `amp` | `backend: "amp"` |
+| Copilot | `copilot` | `backend: "copilot"` |
+| OpenCode | `opencode` | `backend: "opencode"` |
+
+You can also **mix backends per hat** — e.g. use Claude for planning and Kiro for building:
+
+```yaml
+hats:
+  planner:
+    backend: "claude"
+    # ...
+  builder:
+    backend: "kiro"
+    # ...
+```
+
 ## Usage
 
 ```bash

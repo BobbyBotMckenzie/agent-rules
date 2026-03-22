@@ -9,7 +9,9 @@
 # Customize the quality gate commands for your project's tooling.
 
 cli:
-  backend: "claude"  # or: kiro, codex, gemini
+  backend: "claude"  # Options: claude, kiro, codex, gemini, amp, copilot, opencode
+  # For Kiro at work: backend: "kiro" (needs kiro-cli installed + authenticated)
+  # You can also mix backends per hat — see per-hat override examples below
 
 event_loop:
   prompt_file: "PROMPT.md"
