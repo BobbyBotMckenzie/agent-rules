@@ -1,0 +1,36 @@
+# Cursor Rules
+
+## Before Writing Code
+- Read `.agents/skills/code-quality/SKILL.md` for standing rules
+- Read `.agents/skills/no-use-effect/SKILL.md` for React work
+
+## TypeScript
+- Zero `any` — use proper types or `unknown` with type guards
+- No `as any` — use `as SpecificType` with a comment
+- No `@ts-ignore`, `@ts-expect-error`, `biome-ignore`, `eslint-disable`
+- Prefer `satisfies` over `as`
+
+## React
+- Never use `useEffect` directly. Five alternatives:
+  1. Derive state inline (no effect + setState chains)
+  2. React Query / SWR for data fetching
+  3. Event handlers for user actions
+  4. `useMountEffect` for mount-only external sync
+  5. `key` prop to reset state when props change
+- Component order: hooks → state → computed → handlers → early returns → render
+
+## Testing
+- Vertical slices: one test → one implementation → repeat
+- Test behavior through public interfaces, not implementation details
+- Don't mock internals — mock boundaries
+
+## Quality Gates
+Run before every commit:
+```
+pnpm typecheck && pnpm lint && pnpm test
+```
+
+## Architecture
+- No files over 400 lines
+- Deep modules over shallow wrappers
+- Composition over inheritance
