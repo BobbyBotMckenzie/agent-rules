@@ -1,0 +1,207 @@
+# Ralph Orchestrator — Generic TypeScript/React Project
+# Backpressure-driven development: define gates, not steps.
+#
+# Usage:
+#   1. Copy this to your project root
+#   2. Create PROMPT.md with your task
+#   3. ralph run
+#
+# Customize the quality gate commands for your project's tooling.
+
+cli:
+  backend: "claude"  # or: kiro, codex, gemini
+
+event_loop:
+  prompt_file: "PROMPT.md"
+  starting_event: "work.start"
+  completion_promise: "LOOP_COMPLETE"
+  max_iterations: 50
+  max_runtime_seconds: 7200  # 2 hours
+
+core:
+  scratchpad: ".ralph/agent/scratchpad.md"
+  specs_dir: ".ralph/specs/"
+  guardrails:
+    - "Do not push to remote — local commits only"
+    - "Run quality gates before declaring done"
+    - "Use vertical slices (tracer bullets), not horizontal layers"
+    - "Tests verify behavior through public interfaces, not implementation details"
+    - "Never use vi.mock(), vi.spyOn(), or vi.stubGlobal() — use dependency injection"
+    - "Never use useEffect directly — use derived state, event handlers, query libraries, useMountEffect, or key prop"
+    - "Zero any — use proper types or unknown with type guards"
+
+hats:
+  # ── Planning Hats ──────────────────────────────────────────
+
+  griller:
+    name: "Griller"
+    description: "Stress-tests a plan by interviewing relentlessly until every decision branch is resolved"
+    triggers: ["plan.review"]
+    publishes: ["plan.grilled"]
+    instructions: |
+      Follow the grill-me skill (.agents/skills/grill-me/SKILL.md).
+      
+      Interview relentlessly about every aspect of this plan until we reach
+      a shared understanding. Walk down each branch of the design tree,
+      resolving dependencies between decisions one-by-one.
+      
+      For each question, provide your recommended answer.
+      If a question can be answered by exploring the codebase, explore it.
+      
+      When satisfied, emit plan.grilled with a summary of resolved decisions.
+
+  prd_writer:
+    name: "PRD Writer"
+    description: "Creates a PRD through codebase exploration, interview, and module design"
+    triggers: ["work.start"]
+    publishes: ["prd.ready"]
+    instructions: |
+      Follow the write-a-prd skill (.agents/skills/write-a-prd/SKILL.md).
+      
+      1. Read PROMPT.md for the feature description
+      2. Explore the repo to understand current state
+      3. Interview approach: identify major modules to build/modify
+         Look for opportunities to extract deep modules (lots of functionality,
+         simple testable interface)
+      4. Write the PRD to .ralph/specs/prd.md using the template from the skill
+      5. Emit prd.ready with a summary
+
+  planner:
+    name: "Planner"
+    description: "Turns a PRD into a multi-phase implementation plan using tracer-bullet vertical slices"
+    triggers: ["prd.ready", "plan.grilled"]
+    publishes: ["plan.ready"]
+    instructions: |
+      Follow the prd-to-plan skill (.agents/skills/prd-to-plan/SKILL.md).
+      
+      1. Read the PRD from .ralph/specs/prd.md
+      2. Identify durable architectural decisions (routes, schema, models, auth)
+      3. Break into tracer-bullet vertical slices — each cuts through ALL layers
+         end-to-end (schema, API, UI, tests), not horizontal slices of one layer
+      4. Write the plan to ./plans/<feature-name>.md
+      5. Write implementation steps to .ralph/agent/scratchpad.md
+      6. Emit plan.ready with phase count and summary
+
+  # ── Build Hats ─────────────────────────────────────────────
+
+  builder:
+    name: "Builder"
+    description: "Implements the plan using TDD with red-green-refactor, one vertical slice at a time"
+    triggers: ["plan.ready", "review.changes_requested"]
+    publishes: ["build.done"]
+    instructions: |
+      Follow the tdd skill (.agents/skills/tdd/SKILL.md).
+      
+      Implement the plan from .ralph/agent/scratchpad.md using TDD:
+      
+      ## TDD Loop (per vertical slice)
+      RED:   Write ONE test for ONE behavior → test fails
+      GREEN: Write minimal code to pass → test passes
+      REFACTOR: Clean up without changing behavior
+      
+      Rules:
+      - Vertical slices only — never write all tests then all code
+      - Tests verify behavior through public interfaces, not implementation
+      - Each test responds to what you learned from the previous cycle
+      - Prefer deep modules: simple interface, rich implementation
+      - Never use vi.mock/vi.spyOn/vi.stubGlobal — use dependency injection
+      - Never use useEffect — use derived state, event handlers, query libs
+      - Zero any — proper types or unknown with type guards
+      
+      ## Backpressure Requirements
+      
+      Before emitting build.done, you MUST have evidence that ALL gates pass.
+      Customize these commands for your project:
+      
+      - typecheck: pass (run `pnpm typecheck` or `npx tsc --noEmit`)
+      - lint: pass (run `pnpm lint` or `npx biome lint --diagnostic-level=error .`)
+      - tests: pass (run `pnpm test` or `npx vitest run`)
+      - build: pass (run `pnpm build`)
+      
+      Include evidence in your event:
+      ```
+      ralph emit "build.done" "typecheck: pass, lint: pass, tests: pass, build: pass"
+      ```
+      
+      Commit your work with a descriptive message.
+      DO NOT push to remote.
+
+  # ── Review Hats ────────────────────────────────────────────
+
+  reviewer:
+    name: "Reviewer"
+    description: "Verifies quality gates, reviews code quality, and checks architecture"
+    triggers: ["build.done"]
+    publishes: ["review.approved", "review.changes_requested"]
+    instructions: |
+      Verify the builder's claims by re-running quality gates:
+      1. `pnpm typecheck` (or `npx tsc --noEmit`)
+      2. `pnpm lint` (or `npx biome lint --diagnostic-level=error .`)
+      3. `pnpm test` (or `npx vitest run`)
+      
+      Also review:
+      - Are modules deep (rich functionality, simple interface) or shallow?
+      - Is there unnecessary complexity or duplication?
+      - Are tests testing behavior, not implementation?
+      - No vi.mock/vi.spyOn/vi.stubGlobal usage?
+      - No useEffect usage (except useMountEffect)?
+      - No any types?
+      - Does the code match the plan in scratchpad.md?
+      - No files over 400 lines?
+      
+      If all gates pass and code looks good:
+        ralph emit "review.approved" "all gates pass, code reviewed"
+        Print LOOP_COMPLETE
+      
+      If issues found:
+        ralph emit "review.changes_requested" "description of what needs fixing"
+
+  # ── Specialty Hats ─────────────────────────────────────────
+
+  triager:
+    name: "Bug Triager"
+    description: "Investigates bugs by exploring the codebase, identifies root cause, and creates a TDD fix plan"
+    triggers: ["bug.reported"]
+    publishes: ["bug.triaged"]
+    instructions: |
+      Follow the triage-issue skill (.agents/skills/triage-issue/SKILL.md).
+      
+      1. Read the bug description from PROMPT.md
+      2. Explore the codebase to find the root cause
+      3. Trace the execution path and identify the failure point
+      4. Write a fix plan with TDD approach to .ralph/agent/scratchpad.md
+      5. Emit bug.triaged with root cause and proposed fix
+
+  architect:
+    name: "Architecture Reviewer"
+    description: "Explores the codebase for architectural improvements, focusing on deep modules and testability"
+    triggers: ["arch.review"]
+    publishes: ["arch.recommendations"]
+    instructions: |
+      Follow the improve-codebase-architecture skill
+      (.agents/skills/improve-codebase-architecture/SKILL.md).
+      
+      Explore the codebase looking for:
+      - Shallow modules that should be deepened
+      - God objects/files that need decomposition
+      - Missing abstractions or leaky abstractions
+      - Testability improvements
+      - Unnecessary coupling between packages
+      
+      Write recommendations to .ralph/specs/architecture-review.md
+      Emit arch.recommendations with a summary of findings
+
+  glossarist:
+    name: "Glossarist"
+    description: "Extracts a DDD-style ubiquitous language glossary from the codebase and conversation"
+    triggers: ["lang.extract"]
+    publishes: ["lang.glossary"]
+    instructions: |
+      Follow the ubiquitous-language skill
+      (.agents/skills/ubiquitous-language/SKILL.md).
+      
+      Extract a ubiquitous language glossary:
+      - Scan the codebase for domain terms
+      - Identify inconsistencies in naming
+      - Create a glossary in .ralph/specs/ubiquitous-language.md
+      - Emit lang.glossary with term count and key findings

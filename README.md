@@ -57,6 +57,15 @@ Pick the linter your project uses. All three enforce the same core rules:
 - `vi.mock()` / `vi.spyOn()` / `vi.stubGlobal()` → banned in test files
 - `useEffect` → banned via `no-restricted-imports` (ESLint/oxlint) or skill enforcement (Biome)
 
+### Ralph Orchestrator
+
+| File | What it does |
+|---|---|
+| `ralph/ralph.yml` | Full pipeline config: PRD Writer → Planner → Builder (TDD) → Reviewer |
+| `ralph/README.md` | Setup guide and usage examples |
+
+8 hats included: PRD Writer, Griller, Planner, Builder, Reviewer, Bug Triager, Architecture Reviewer, Glossarist. See `ralph/README.md` for details.
+
 ### Git Hooks
 
 | File | What it does |
